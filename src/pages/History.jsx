@@ -13,7 +13,9 @@ const History = () => {
   const fetchCampaignHistory = async () => {
     try {
       const data = await getCampaignHistory()
-      setCampaigns(data)
+      if (data.success) {
+        setCampaigns(data.campaigns)
+      }
     } catch (error) {
       console.error('Failed to fetch campaign history:', error)
       // Mock data for demo
@@ -22,45 +24,23 @@ const History = () => {
           id: 1,
           name: 'Winter Sale Campaign',
           audience: 'High Value',
-          messagesSent: 1250,
+          messages_sent: 1250,
           conversions: 89,
           revenue: 15600,
-          date: '2024-04-09',
+          created_at: '2024-04-09T10:30:00Z',
           status: 'completed',
-          conversionRate: 7.1
+          conversion_rate: 7.1
         },
         {
           id: 2,
           name: 'Cart Recovery Campaign',
           audience: 'Abandoned Cart',
-          messagesSent: 890,
+          messages_sent: 890,
           conversions: 156,
           revenue: 8900,
-          date: '2024-04-08',
+          created_at: '2024-04-08T14:15:00Z',
           status: 'completed',
-          conversionRate: 17.5
-        },
-        {
-          id: 3,
-          name: 'Re-engagement Campaign',
-          audience: 'Inactive',
-          messagesSent: 2100,
-          conversions: 67,
-          revenue: 3400,
-          date: '2024-04-07',
-          status: 'completed',
-          conversionRate: 3.2
-        },
-        {
-          id: 4,
-          name: 'New Product Launch',
-          audience: 'High Value',
-          messagesSent: 980,
-          conversions: 124,
-          revenue: 22100,
-          date: '2024-04-06',
-          status: 'completed',
-          conversionRate: 12.7
+          conversion_rate: 17.5
         }
       ])
     } finally {
@@ -119,7 +99,7 @@ const History = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Messages</p>
               <p className="text-2xl font-bold text-gray-900">
-                {campaigns.reduce((sum, campaign) => sum + campaign.messagesSent, 0).toLocaleString()}
+                {campaigns.reduce((sum, campaign) => sum + (campaign.messages_sent || 0), 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -133,7 +113,7 @@ const History = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Conversions</p>
               <p className="text-2xl font-bold text-gray-900">
-                {campaigns.reduce((sum, campaign) => sum + campaign.conversions, 0).toLocaleString()}
+                {campaigns.reduce((sum, campaign) => sum + (campaign.conversions || 0), 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -147,7 +127,7 @@ const History = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Avg Conversion Rate</p>
               <p className="text-2xl font-bold text-gray-900">
-                {(campaigns.reduce((sum, campaign) => sum + campaign.conversionRate, 0) / campaigns.length).toFixed(1)}%
+                {campaigns.length > 0 ? (campaigns.reduce((sum, campaign) => sum + (campaign.conversion_rate || 0), 0) / campaigns.length).toFixed(1) : 0}%
               </p>
             </div>
           </div>
@@ -161,7 +141,7 @@ const History = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${campaigns.reduce((sum, campaign) => sum + campaign.revenue, 0).toLocaleString()}
+                ${campaigns.reduce((sum, campaign) => sum + (campaign.revenue || 0), 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -217,27 +197,27 @@ const History = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {campaign.messagesSent.toLocaleString()}
+                    {campaign.messages_sent?.toLocaleString() || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {campaign.conversions.toLocaleString()}
+                    {campaign.conversions?.toLocaleString() || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${campaign.revenue.toLocaleString()}
+                    ${campaign.revenue?.toLocaleString() || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      campaign.conversionRate > 10 
+                      campaign.conversion_rate > 10 
                         ? 'bg-green-100 text-green-800'
-                        : campaign.conversionRate > 5
+                        : campaign.conversion_rate > 5
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {campaign.conversionRate}%
+                      {campaign.conversion_rate}%
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {campaign.date}
+                    {new Date(campaign.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(campaign.status)}`}>

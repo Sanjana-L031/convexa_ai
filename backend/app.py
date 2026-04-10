@@ -5,9 +5,141 @@ import os
 from datetime import datetime, timedelta
 import random
 import json
+import bcrypt
+import jwt
 
 app = Flask(__name__)
 CORS(app)
+
+# Configure OpenAI (you'll need to set your API key)
+# openai.api_key = os.getenv('OPENAI_API_KEY')
+
+# Mock admin users for authentication
+mock_admin_users = [
+    {
+        "id": 1,
+        "name": "Admin User",
+        "email": "admin@convexa.ai",
+        "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBdXwtGtrmu.Iq",  # admin123
+        "role": "admin"
+    }
+]
+
+# JWT Configuration
+JWT_SECRET_KEY = "convexa-ai-secret-key-2024"
+JWT_ALGORITHM = "HS256"
+
+def hash_password(password):
+    """Hash password using bcrypt"""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password, hashed_password):
+    """Verify password against hash"""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+def generate_token(user_data):
+    """Generate JWT token"""
+    payload = {
+        'user_id': user_data['id'],
+        'email': user_data['email'],
+        'role': user_data.get('role', 'admin'),
+        'exp': datetime.utcnow() + timedelta(hours=24),
+        'iat': datetime.utcnow()
+    }
+    
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+# Authentication Routes
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """Admin login"""
+    try:
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+        
+        # Find admin user
+        admin_user = None
+        for user in mock_admin_users:
+            if user['email'] == email:
+                admin_user = user
+                break
+        
+        if not admin_user:
+            return jsonify({'error': 'Invalid credentials'}), 401
+        
+        # Verify password
+        if not verify_password(password, admin_user['password_hash']):
+            return jsonify({'error': 'Invalid credentials'}), 401
+        
+        # Generate token
+        token = generate_token(admin_user)
+        
+        return jsonify({
+            'success': True,
+            'token': token,
+            'user': {
+                'id': admin_user['id'],
+                'email': admin_user['email'],
+                'name': admin_user['name'],
+                'role': admin_user['role']
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    """Register new admin user"""
+    try:
+        data = request.json
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        role = data.get('role', 'admin')
+        
+        if not all([name, email, password]):
+            return jsonify({'error': 'Name, email and password required'}), 400
+        
+        # Check if user already exists
+        for user in mock_admin_users:
+            if user['email'] == email:
+                return jsonify({'error': 'User already exists'}), 400
+        
+        # Hash password
+        password_hash = hash_password(password)
+        
+        # Create user
+        new_user = {
+            'id': len(mock_admin_users) + 1,
+            'name': name,
+            'email': email,
+            'password_hash': password_hash,
+            'role': role
+        }
+        
+        mock_admin_users.append(new_user)
+        
+        # Generate token
+        token = generate_token(new_user)
+        
+        return jsonify({
+            'success': True,
+            'token': token,
+            'user': {
+                'id': new_user['id'],
+                'email': new_user['email'],
+                'name': new_user['name'],
+                'role': new_user['role']
+            }
+        })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Configure OpenAI (you'll need to set your API key)
 # openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -100,20 +232,31 @@ def get_analytics():
     # Campaign performance by segment
     segments = segment_users()
     campaign_data = []
+    segment_insights = {}
+    
     for segment, users in segments.items():
         campaign_data.append({
             "segment": segment.replace('_', ' ').title(),
             "messages": len(users) * 50,
             "conversions": len(users) * random.randint(5, 15)
         })
+        
+        # Calculate segment insights
+        segment_insights[segment] = {
+            'count': len(users),
+            'total_revenue': sum(user['total_spent'] for user in users),
+            'avg_revenue_per_user': sum(user['total_spent'] for user in users) / max(len(users), 1)
+        }
     
     return jsonify({
+        "success": True,
         "revenue": total_revenue,
         "messagesSent": total_messages,
         "conversionRate": conversion_rate,
         "totalUsers": total_users,
         "revenueData": revenue_data,
-        "campaignData": campaign_data
+        "campaignData": campaign_data,
+        "segmentInsights": segment_insights
     })
 
 @app.route('/api/campaign/trigger', methods=['POST'])
@@ -183,32 +326,69 @@ def get_campaign_history():
             "id": 1,
             "name": "Winter Sale Campaign",
             "audience": "High Value",
-            "messagesSent": 1250,
+            "messages_sent": 1250,
             "conversions": 89,
             "revenue": 15600,
-            "date": "2024-04-09",
+            "created_at": "2024-04-09T10:30:00Z",
             "status": "completed",
-            "conversionRate": 7.1
+            "conversion_rate": 7.1
         },
         {
             "id": 2,
             "name": "Cart Recovery Campaign", 
             "audience": "Abandoned Cart",
-            "messagesSent": 890,
+            "messages_sent": 890,
             "conversions": 156,
             "revenue": 8900,
-            "date": "2024-04-08", 
+            "created_at": "2024-04-08T14:15:00Z", 
             "status": "completed",
-            "conversionRate": 17.5
+            "conversion_rate": 17.5
+        },
+        {
+            "id": 3,
+            "name": "Re-engagement Campaign",
+            "audience": "Inactive",
+            "messages_sent": 2100,
+            "conversions": 67,
+            "revenue": 3400,
+            "created_at": "2024-04-07T16:45:00Z",
+            "status": "completed",
+            "conversion_rate": 3.2
         }
     ]
     
-    return jsonify(history)
+    return jsonify({
+        'success': True,
+        'campaigns': history
+    })
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
     """Get user list with segments"""
-    return jsonify(mock_users)
+    # Apply ML-like segmentation
+    segmented_users = []
+    for user in mock_users:
+        user_copy = user.copy()
+        
+        # Add segment labels and emojis
+        segment_mapping = {
+            'high_value': {'label': 'High Value', 'emoji': '💰'},
+            'abandoned_cart': {'label': 'Abandoned Cart', 'emoji': '🛒'},
+            'inactive': {'label': 'Inactive', 'emoji': '😴'}
+        }
+        
+        segment_info = segment_mapping.get(user['segment'], {'label': 'Customer', 'emoji': '👤'})
+        user_copy['segment_label'] = segment_info['label']
+        user_copy['segment_emoji'] = segment_info['emoji']
+        user_copy['segment_confidence'] = round(random.uniform(0.7, 0.95), 2)
+        
+        segmented_users.append(user_copy)
+    
+    return jsonify({
+        'success': True,
+        'users': segmented_users,
+        'total_count': len(segmented_users)
+    })
 
 @app.route('/health', methods=['GET'])
 def health_check():

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Users as UsersIcon, Search, Filter } from 'lucide-react'
+import { getUsers } from '../services/api'
 
 const Users = () => {
   const [users, setUsers] = useState([])
@@ -8,62 +9,61 @@ const Users = () => {
   const [selectedSegment, setSelectedSegment] = useState('all')
 
   useEffect(() => {
-    // Mock user data - in real app, fetch from API
-    const mockUsers = [
-      {
-        id: 1,
-        name: 'Rahul Sharma',
-        email: 'rahul@example.com',
-        segment: 'High Value',
-        lastActive: '2024-04-09',
-        totalSpent: 2500,
-        cartItems: ['iPhone 15', 'AirPods'],
-        status: 'active'
-      },
-      {
-        id: 2,
-        name: 'Priya Patel',
-        email: 'priya@example.com',
-        segment: 'Abandoned Cart',
-        lastActive: '2024-04-08',
-        totalSpent: 450,
-        cartItems: ['Laptop', 'Mouse'],
-        status: 'inactive'
-      },
-      {
-        id: 3,
-        name: 'Amit Kumar',
-        email: 'amit@example.com',
-        segment: 'Inactive',
-        lastActive: '2024-03-15',
-        totalSpent: 120,
-        cartItems: [],
-        status: 'inactive'
-      },
-      {
-        id: 4,
-        name: 'Sneha Reddy',
-        email: 'sneha@example.com',
-        segment: 'High Value',
-        lastActive: '2024-04-10',
-        totalSpent: 3200,
-        cartItems: ['MacBook Pro'],
-        status: 'active'
-      },
-      {
-        id: 5,
-        name: 'Vikram Singh',
-        email: 'vikram@example.com',
-        segment: 'Abandoned Cart',
-        lastActive: '2024-04-07',
-        totalSpent: 890,
-        cartItems: ['Gaming Chair', 'Keyboard'],
-        status: 'inactive'
-      }
-    ]
-    setUsers(mockUsers)
-    setFilteredUsers(mockUsers)
+    fetchUsers()
   }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const response = await getUsers()
+      if (response.success) {
+        setUsers(response.users)
+        setFilteredUsers(response.users)
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
+      // Fallback to mock data
+      const mockUsers = [
+        {
+          id: 1,
+          name: 'Rahul Sharma',
+          email: 'rahul@example.com',
+          segment: 'high_value',
+          segment_label: 'High Value',
+          segment_emoji: '💰',
+          lastActive: '2024-04-09',
+          totalSpent: 2500,
+          cartItems: ['iPhone 15', 'AirPods'],
+          status: 'active'
+        },
+        {
+          id: 2,
+          name: 'Priya Patel',
+          email: 'priya@example.com',
+          segment: 'abandoned_cart',
+          segment_label: 'Abandoned Cart',
+          segment_emoji: '🛒',
+          lastActive: '2024-04-08',
+          totalSpent: 450,
+          cartItems: ['Laptop', 'Mouse'],
+          status: 'inactive'
+        },
+        {
+          id: 3,
+          name: 'Amit Kumar',
+          email: 'amit@example.com',
+          segment: 'inactive',
+          segment_label: 'Inactive',
+          segment_emoji: '😴',
+          lastActive: '2024-03-15',
+          totalSpent: 120,
+          cartItems: [],
+          status: 'inactive'
+        }
+      ]
+      setUsers(mockUsers)
+      setFilteredUsers(mockUsers)
+    }
+  }
 
   useEffect(() => {
     let filtered = users
