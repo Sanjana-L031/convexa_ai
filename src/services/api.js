@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = '/api'
+const API_BASE_URL = 'http://localhost:5000/api'
 
 // Create axios instance with default config
 const api = axios.create({
@@ -10,7 +10,29 @@ const api = axios.create({
   },
 })
 
-// Mock data for demo purposes
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+// Mock data for fallback
 const mockAnalytics = {
   revenue: 125000,
   messagesSent: 8450,
@@ -29,7 +51,12 @@ const mockAnalytics = {
     { segment: 'High Value', messages: 1200, conversions: 180 },
     { segment: 'Abandoned Cart', messages: 890, conversions: 156 },
     { segment: 'Inactive', messages: 2100, conversions: 67 },
-  ]
+  ],
+  segmentInsights: {
+    high_value: { count: 45, total_revenue: 67500, avg_revenue_per_user: 1500 },
+    abandoned_cart: { count: 123, total_revenue: 34500, avg_revenue_per_user: 280 },
+    inactive: { count: 89, total_revenue: 12000, avg_revenue_per_user: 135 }
+  }
 }
 
 // API Functions
@@ -38,8 +65,28 @@ export const getAnalytics = async () => {
     const response = await api.get('/analytics')
     return response.data
   } catch (error) {
-    console.log('Using mock analytics data')
+    console.log('Using mock analytics data:', error.message)
     return mockAnalytics
+  }
+}
+
+export const getUsers = async () => {
+  try {
+    const response = await api.get('/users')
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch users:', error)
+    throw error
+  }
+}
+
+export const getUserSegments = async () => {
+  try {
+    const response = await api.get('/users/segments')
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch user segments:', error)
+    throw error
   }
 }
 
@@ -48,7 +95,7 @@ export const triggerCampaign = async (campaignData) => {
     const response = await api.post('/campaign/trigger', campaignData)
     return response.data
   } catch (error) {
-    console.log('Using mock campaign response')
+    console.log('Using mock campaign response:', error.message)
     // Mock AI-generated response
     const mockMessages = {
       high_value: "🌟 Exclusive VIP offer just for you! Get 25% off premium items + free shipping. Your loyalty deserves the best rewards! Shop now: [link]",
@@ -74,8 +121,53 @@ export const getCampaignHistory = async () => {
     const response = await api.get('/campaign/history')
     return response.data
   } catch (error) {
-    console.log('Using mock campaign history')
-    return []
+    console.log('Using mock campaign history:', error.message)
+    return {
+      success: true,
+      campaigns: [
+        {
+          id: 1,
+          name: 'Winter Sale Campaign',
+          audience: 'High Value',
+          messages_sent: 1250,
+          conversions: 89,
+          revenue: 15600,
+          created_at: '2024-04-09T10:30:00Z',
+          status: 'completed',
+          conversion_rate: 7.1
+        },
+        {
+          id: 2,
+          name: 'Cart Recovery Campaign',
+          audience: 'Abandoned Cart',
+          messages_sent: 890,
+          conversions: 156,
+          revenue: 8900,
+          created_at: '2024-04-08T14:15:00Z',
+          status: 'completed',
+          conversion_rate: 17.5
+        }
+      ]
+    }
+  }
+}
+
+// Authentication functions
+export const login = async (credentials) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials)
+    return response.data
+  } catch (error) {
+    throw error.response?.data || error
+  }
+}
+
+export const register = async (userData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/auth/register`, userData)
+    return response.data
+  } catch (error) {
+    throw error.response?.data || error
   }
 }
 
