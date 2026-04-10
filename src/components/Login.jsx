@@ -29,7 +29,7 @@ const Login = ({ onLogin }) => {
 
       const data = await response.json()
 
-      if (data.success) {
+      if (response.ok && data.success) {
         localStorage.setItem('token', data.token)
         localStorage.setItem('user', JSON.stringify(data.user))
         onLogin(data.user, data.token)
@@ -37,6 +37,7 @@ const Login = ({ onLogin }) => {
         setError(data.error || 'Authentication failed')
       }
     } catch (error) {
+      console.error('Login error:', error)
       setError('Network error. Please try again.')
     } finally {
       setLoading(false)

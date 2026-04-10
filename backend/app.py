@@ -20,7 +20,7 @@ mock_admin_users = [
         "id": 1,
         "name": "Admin User",
         "email": "admin@convexa.ai",
-        "password_hash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBdXwtGtrmu.Iq",  # admin123
+        "password_hash": "$2b$12$PnK7I2.NpnEPDkIermTmiuK3ylrTrOy.lAf1xf3z2Y1I.SJlLNpmu",  # admin123
         "role": "admin"
     }
 ]
@@ -39,12 +39,14 @@ def verify_password(password, hashed_password):
 
 def generate_token(user_data):
     """Generate JWT token"""
+    from datetime import timezone
+    
     payload = {
         'user_id': user_data['id'],
         'email': user_data['email'],
         'role': user_data.get('role', 'admin'),
-        'exp': datetime.utcnow() + timedelta(hours=24),
-        'iat': datetime.utcnow()
+        'exp': datetime.now(timezone.utc) + timedelta(hours=24),
+        'iat': datetime.now(timezone.utc)
     }
     
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
