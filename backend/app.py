@@ -215,5 +215,9 @@ def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
+@app.route("/")
+def home():
+    return "Convexa AI Backend is running! 🚀"
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
