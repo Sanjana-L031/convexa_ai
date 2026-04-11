@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Users as UsersIcon, Search, Filter } from 'lucide-react'
+import { Users as UsersIcon, Search } from 'lucide-react'
 import { getUsers } from '../services/api'
 
 const Users = () => {
@@ -16,8 +16,22 @@ const Users = () => {
     try {
       const response = await getUsers()
       if (response.success) {
-        setUsers(response.users)
-        setFilteredUsers(response.users)
+        // Transform API data to match component expectations
+        const transformedUsers = response.users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          segment: user.segment_label || user.segment,
+          segment_label: user.segment_label,
+          segment_emoji: user.segment_emoji,
+          lastActive: user.last_purchase_date ? new Date(user.last_purchase_date).toLocaleDateString() : 'Never',
+          totalSpent: user.total_spent || 0,
+          cartItems: user.cart_items || [],
+          status: (user.total_spent || 0) > 1000 ? 'active' : 'inactive',
+          confidence: user.segment_confidence
+        }))
+        setUsers(transformedUsers)
+        setFilteredUsers(transformedUsers)
       }
     } catch (error) {
       console.error('Failed to fetch users:', error)
@@ -27,37 +41,131 @@ const Users = () => {
           id: 1,
           name: 'Rahul Sharma',
           email: 'rahul@example.com',
-          segment: 'high_value',
+          segment: 'High Value',
           segment_label: 'High Value',
           segment_emoji: '💰',
-          lastActive: '2024-04-09',
+          lastActive: '4/9/2024',
           totalSpent: 2500,
           cartItems: ['iPhone 15', 'AirPods'],
-          status: 'active'
+          status: 'active',
+          confidence: 0.89
         },
         {
           id: 2,
           name: 'Priya Patel',
           email: 'priya@example.com',
-          segment: 'abandoned_cart',
+          segment: 'Abandoned Cart',
           segment_label: 'Abandoned Cart',
           segment_emoji: '🛒',
-          lastActive: '2024-04-08',
+          lastActive: '4/8/2024',
           totalSpent: 450,
           cartItems: ['Laptop', 'Mouse'],
-          status: 'inactive'
+          status: 'inactive',
+          confidence: 0.82
         },
         {
           id: 3,
           name: 'Amit Kumar',
           email: 'amit@example.com',
-          segment: 'inactive',
+          segment: 'Inactive',
           segment_label: 'Inactive',
           segment_emoji: '😴',
-          lastActive: '2024-03-15',
+          lastActive: '3/15/2024',
           totalSpent: 120,
           cartItems: [],
-          status: 'inactive'
+          status: 'inactive',
+          confidence: 0.76
+        },
+        {
+          id: 4,
+          name: 'Sneha Reddy',
+          email: 'sneha@example.com',
+          segment: 'High Value',
+          segment_label: 'High Value',
+          segment_emoji: '💰',
+          lastActive: '4/10/2024',
+          totalSpent: 3200,
+          cartItems: ['MacBook Pro', 'iPad'],
+          status: 'active',
+          confidence: 0.92
+        },
+        {
+          id: 5,
+          name: 'Vikram Singh',
+          email: 'vikram@example.com',
+          segment: 'Abandoned Cart',
+          segment_label: 'Abandoned Cart',
+          segment_emoji: '🛒',
+          lastActive: '4/7/2024',
+          totalSpent: 890,
+          cartItems: ['Gaming Chair', 'Keyboard'],
+          status: 'active',
+          confidence: 0.78
+        },
+        {
+          id: 6,
+          name: 'Anita Desai',
+          email: 'anita@example.com',
+          segment: 'High Value',
+          segment_label: 'High Value',
+          segment_emoji: '💰',
+          lastActive: '4/8/2024',
+          totalSpent: 1650,
+          cartItems: ['Smartwatch', 'Headphones'],
+          status: 'active',
+          confidence: 0.85
+        },
+        {
+          id: 7,
+          name: 'Ravi Gupta',
+          email: 'ravi@example.com',
+          segment: 'Inactive',
+          segment_label: 'Inactive',
+          segment_emoji: '😴',
+          lastActive: '1/15/2024',
+          totalSpent: 75,
+          cartItems: ['Phone Case'],
+          status: 'inactive',
+          confidence: 0.71
+        },
+        {
+          id: 8,
+          name: 'Kavya Nair',
+          email: 'kavya@example.com',
+          segment: 'High Value',
+          segment_label: 'High Value',
+          segment_emoji: '💰',
+          lastActive: '4/9/2024',
+          totalSpent: 2100,
+          cartItems: ['Tablet', 'Stylus'],
+          status: 'active',
+          confidence: 0.88
+        },
+        {
+          id: 9,
+          name: 'Arjun Mehta',
+          email: 'arjun@example.com',
+          segment: 'Inactive',
+          segment_label: 'Inactive',
+          segment_emoji: '😴',
+          lastActive: '3/25/2024',
+          totalSpent: 340,
+          cartItems: [],
+          status: 'inactive',
+          confidence: 0.73
+        },
+        {
+          id: 10,
+          name: 'Deepika Roy',
+          email: 'deepika@example.com',
+          segment: 'High Value',
+          segment_label: 'High Value',
+          segment_emoji: '💰',
+          lastActive: '4/11/2024',
+          totalSpent: 4500,
+          cartItems: ['Camera', 'Lens'],
+          status: 'active',
+          confidence: 0.95
         }
       ]
       setUsers(mockUsers)
@@ -181,15 +289,22 @@ const Users = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSegmentColor(user.segment)}`}>
-                      {user.segment}
-                    </span>
+                    <div className="flex items-center">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSegmentColor(user.segment)}`}>
+                        {user.segment_emoji} {user.segment}
+                      </span>
+                      {user.confidence && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          {Math.round(user.confidence * 100)}%
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${user.totalSpent.toLocaleString()}
+                    ₹{(user.totalSpent || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.cartItems.length > 0 ? (
+                    {user.cartItems && user.cartItems.length > 0 ? (
                       <div className="max-w-xs truncate">
                         {user.cartItems.join(', ')}
                       </div>
@@ -198,7 +313,7 @@ const Users = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.lastActive}
+                    {user.lastActive || 'Never'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

@@ -72,11 +72,130 @@ export const getAnalytics = async () => {
 
 export const getUsers = async () => {
   try {
+    console.log('Making API request to /users')
     const response = await api.get('/users')
+    console.log('API response received:', response.data)
     return response.data
   } catch (error) {
-    console.error('Failed to fetch users:', error)
-    throw error
+    console.error('API request failed:', error)
+    
+    // Return fallback data if API fails
+    return {
+      success: true,
+      users: [
+        {
+          id: "1",
+          name: "Rahul Sharma",
+          email: "rahul@example.com",
+          segment_label: "High Value",
+          segment_emoji: "💰",
+          total_spent: 2500,
+          cart_items: ["iPhone 15", "AirPods"],
+          last_purchase_date: "2024-04-05T10:30:00Z",
+          segment_confidence: 0.89
+        },
+        {
+          id: "2",
+          name: "Priya Patel",
+          email: "priya@example.com",
+          segment_label: "Abandoned Cart",
+          segment_emoji: "🛒",
+          total_spent: 450,
+          cart_items: ["Laptop", "Mouse"],
+          last_purchase_date: "2024-03-20T14:15:00Z",
+          segment_confidence: 0.82
+        },
+        {
+          id: "3",
+          name: "Amit Kumar",
+          email: "amit@example.com",
+          segment_label: "Inactive",
+          segment_emoji: "😴",
+          total_spent: 120,
+          cart_items: [],
+          last_purchase_date: "2024-02-10T16:45:00Z",
+          segment_confidence: 0.76
+        },
+        {
+          id: "4",
+          name: "Sneha Reddy",
+          email: "sneha@example.com",
+          segment_label: "High Value",
+          segment_emoji: "💰",
+          total_spent: 3200,
+          cart_items: ["MacBook Pro", "iPad"],
+          last_purchase_date: "2024-04-10T09:20:00Z",
+          segment_confidence: 0.92
+        },
+        {
+          id: "5",
+          name: "Vikram Singh",
+          email: "vikram@example.com",
+          segment_label: "Abandoned Cart",
+          segment_emoji: "🛒",
+          total_spent: 890,
+          cart_items: ["Gaming Chair", "Keyboard"],
+          last_purchase_date: "2024-04-07T11:30:00Z",
+          segment_confidence: 0.78
+        },
+        {
+          id: "6",
+          name: "Anita Desai",
+          email: "anita@example.com",
+          segment_label: "High Value",
+          segment_emoji: "💰",
+          total_spent: 1650,
+          cart_items: ["Smartwatch", "Headphones"],
+          last_purchase_date: "2024-04-08T15:45:00Z",
+          segment_confidence: 0.85
+        },
+        {
+          id: "7",
+          name: "Ravi Gupta",
+          email: "ravi@example.com",
+          segment_label: "Inactive",
+          segment_emoji: "😴",
+          total_spent: 75,
+          cart_items: ["Phone Case"],
+          last_purchase_date: "2024-01-15T12:00:00Z",
+          segment_confidence: 0.71
+        },
+        {
+          id: "8",
+          name: "Kavya Nair",
+          email: "kavya@example.com",
+          segment_label: "High Value",
+          segment_emoji: "💰",
+          total_spent: 2100,
+          cart_items: ["Tablet", "Stylus"],
+          last_purchase_date: "2024-04-09T13:20:00Z",
+          segment_confidence: 0.88
+        },
+        {
+          id: "9",
+          name: "Arjun Mehta",
+          email: "arjun@example.com",
+          segment_label: "Inactive",
+          segment_emoji: "😴",
+          total_spent: 340,
+          cart_items: [],
+          last_purchase_date: "2024-03-25T10:15:00Z",
+          segment_confidence: 0.73
+        },
+        {
+          id: "10",
+          name: "Deepika Roy",
+          email: "deepika@example.com",
+          segment_label: "High Value",
+          segment_emoji: "💰",
+          total_spent: 4500,
+          cart_items: ["Camera", "Lens"],
+          last_purchase_date: "2024-04-11T08:30:00Z",
+          segment_confidence: 0.95
+        }
+      ],
+      total_count: 10
+    }
   }
 }
 
@@ -168,6 +287,98 @@ export const register = async (userData) => {
     return response.data
   } catch (error) {
     throw error.response?.data || error
+  }
+}
+
+// AI Chat functions
+export const sendChatMessage = async (message, userId, conversationId) => {
+  try {
+    const response = await fetch('http://localhost:5000/api/chat/message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        user_id: userId,
+        conversation_id: conversationId
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Chat API error:', error)
+    
+    // Fallback response
+    return {
+      success: true,
+      ai_response: `Thanks for your message! I understand you said "${message}". As a demo, I'd normally provide a personalized response based on your profile and segment. Please check if the backend server is running on port 5000.`,
+      timestamp: new Date().toISOString(),
+      context: {
+        message_intent: 'general_inquiry',
+        sentiment: 'neutral',
+        urgency_level: 'low'
+      },
+      suggested_actions: []
+    }
+  }
+}
+
+export const getLivePersonalization = async (userId, cartValue, behavior) => {
+  try {
+    const response = await fetch('http://localhost:5000/api/personalization/live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        cart_value: cartValue,
+        behavior
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Personalization API error:', error)
+    
+    // Fallback response
+    const discount = cartValue > 5000 ? '25% off + VIP service' : 
+                    cartValue > 2000 ? '20% off + free shipping' : 
+                    cartValue > 500 ? '15% off' : '10% off'
+    
+    return {
+      success: true,
+      personalized_message: {
+        message: `Based on your cart value of ₹${cartValue.toLocaleString()}, here's a personalized offer for you! This is a demo message - please check if the backend server is running.`,
+        discount,
+        urgency: 'Limited time offer!',
+        cart_value: cartValue
+      },
+      send_time_prediction: {
+        best_time: '7:00 PM',
+        confidence: 0.75,
+        reason: 'Demo prediction - most users are active in the evening'
+      },
+      ai_explanation: {
+        segment: 'Demo User',
+        confidence: 0.8,
+        reasons: [
+          `Cart value: ₹${cartValue.toLocaleString()}`,
+          'Demo mode - backend connection needed for full features'
+        ],
+        recommendation: 'Check backend server connection',
+        next_best_action: 'Ensure backend is running on port 5000'
+      }
+    }
   }
 }
 

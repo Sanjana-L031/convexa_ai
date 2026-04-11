@@ -1,47 +1,32 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { BarChart3, Users, MessageSquare, History, Zap, LogOut, User, Brain, Settings, ShoppingBag, Activity, Gift } from 'lucide-react'
+import { ShoppingBag, MessageSquare, Activity, Gift, History, LogOut, User } from 'lucide-react'
 
-const Layout = ({ children, user, onLogout, userType }) => {
+const CustomerLayout = ({ children, customer, onLogout }) => {
   const location = useLocation()
   
-  // Navigation based on user type
-  const adminNavigation = [
-    { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'AI Demo', href: '/ai-demo', icon: Brain },
-    { name: 'Campaign', href: '/campaign', icon: Zap },
-    { name: 'Users', href: '/users', icon: Users },
-    { name: 'History', href: '/history', icon: History },
-    { name: 'Integrations', href: '/integrations', icon: Settings },
-  ]
-
-  const customerNavigation = [
+  const navigation = [
     { name: 'Activity', href: '/', icon: Activity },
     { name: 'Chat', href: '/chat', icon: MessageSquare },
     { name: 'Offers', href: '/offers', icon: Gift },
     { name: 'Messages', href: '/messages', icon: History },
   ]
 
-  const navigation = userType === 'customer' ? customerNavigation : adminNavigation
-  const isCustomer = userType === 'customer'
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-xl border-r border-slate-200 flex flex-col">
-          <div className="p-6 border-b border-slate-200">
+        <div className="w-64 bg-white shadow-xl border-r border-gray-200 flex flex-col">
+          <div className="p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                {isCustomer ? <ShoppingBag className="h-6 w-6 text-white" /> : <MessageSquare className="h-6 w-6 text-white" />}
+                <ShoppingBag className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Convexa AI
+                  Convexa
                 </h1>
-                <p className="text-xs text-slate-500">
-                  {isCustomer ? 'Customer Portal' : 'Smart Messaging'}
-                </p>
+                <p className="text-xs text-gray-500">Customer Portal</p>
               </div>
             </div>
           </div>
@@ -57,7 +42,7 @@ const Layout = ({ children, user, onLogout, userType }) => {
                   className={`flex items-center px-4 py-3 mb-2 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   <Icon className="mr-3 h-5 w-5" />
@@ -67,23 +52,21 @@ const Layout = ({ children, user, onLogout, userType }) => {
             })}
           </nav>
 
-          {/* User Profile - Moved to bottom */}
-          <div className="p-4 border-t border-slate-200 bg-white mt-auto">
+          {/* Customer Profile */}
+          <div className="p-4 border-t border-gray-200 bg-white mt-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{user?.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {isCustomer ? (user?.segment || 'Customer') : (user?.role || 'Admin')}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900">{customer?.name}</p>
+                  <p className="text-xs text-gray-500">{customer?.segment || 'Customer'}</p>
                 </div>
               </div>
               <button
                 onClick={onLogout}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Logout"
               >
                 <LogOut className="h-4 w-4" />
@@ -94,7 +77,7 @@ const Layout = ({ children, user, onLogout, userType }) => {
 
         {/* Main content */}
         <div className="flex-1">
-          <main>
+          <main className="p-8">
             {children}
           </main>
         </div>
@@ -103,4 +86,4 @@ const Layout = ({ children, user, onLogout, userType }) => {
   )
 }
 
-export default Layout
+export default CustomerLayout

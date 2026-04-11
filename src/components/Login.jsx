@@ -18,21 +18,41 @@ const Login = ({ onLogin }) => {
     setError('')
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register'
+      // Determine if this is an admin or customer login based on email
+      const isAdminLogin = formData.email === 'admin@convexa.ai'
+      const endpoint = isLogin 
+        ? (isAdminLogin ? '/api/auth/login' : '/api/customer/login')
+        : '/api/auth/register'
+      
+      // Prepare request data
+      const requestData = isAdminLogin 
+        ? formData 
+        : { identifier: formData.email, password: formData.password }
+
       const response = await fetch(`http://localhost:5000${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       })
 
       const data = await response.json()
 
       if (response.ok && data.success) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
-        onLogin(data.user, data.token)
+        if (isAdminLogin) {
+          // Admin login
+          localStorage.setItem('token', data.token)
+          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('userType', 'admin')
+          onLogin(data.user, data.token, 'admin')
+        } else {
+          // Customer login
+          localStorage.setItem('customerToken', data.token)
+          localStorage.setItem('customerData', JSON.stringify(data.customer))
+          localStorage.setItem('userType', 'customer')
+          onLogin(data.customer, data.token, 'customer')
+        }
       } else {
         setError(data.error || 'Authentication failed')
       }
@@ -178,9 +198,32 @@ const Login = ({ onLogin }) => {
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-gray-600">Email: admin@convexa.ai</p>
-            <p className="text-xs text-gray-600">Password: admin123</p>
+            <p className="text-sm font-medium text-gray-700 mb-3">Demo Credentials:</p>
+            
+            <div className="space-y-3">
+              {/* Admin Demo */}
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <p className="text-xs font-semibold text-blue-800 mb-1">👨‍💼 Admin Dashboard</p>
+                <p className="text-xs text-blue-700">Email: admin@convexa.ai</p>
+                <p className="text-xs text-blue-700">Password: admin123</p>
+              </div>
+              
+              {/* Customer Demo */}
+              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                <p className="text-xs font-semibold text-green-800 mb-1">👤 Customer Portal</p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
+                  <div>
+                    <p>Rahul (High Value):</p>
+                    <p>rahul@example.com</p>
+                  </div>
+                  <div>
+                    <p>Priya (Abandoned Cart):</p>
+                    <p>priya@example.com</p>
+                  </div>
+                </div>
+                <p className="text-xs text-green-700 mt-1">Password: demo123</p>
+              </div>
+            </div>
           </div>
         </div>
 

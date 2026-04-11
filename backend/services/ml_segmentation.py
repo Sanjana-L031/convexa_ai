@@ -58,6 +58,20 @@ class MLSegmentation:
         
         return features
     
+    def segment_users(self, users_data):
+        """Segment users and return grouped by segment (for compatibility)"""
+        segmented_users_list = self.segment_users_ml(users_data)
+        
+        # Group by segment
+        segments = {}
+        for user in segmented_users_list:
+            segment = user['segment']
+            if segment not in segments:
+                segments[segment] = []
+            segments[segment].append(user)
+        
+        return segments
+
     def segment_users_ml(self, users_data):
         """Segment users using rule-based ML approach"""
         if not users_data:
